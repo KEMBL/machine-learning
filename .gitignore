@@ -1,0 +1,8 @@
+/build
+/node_modules
+/tmp
+.vscode
+
+# other
+.DS_Store
+package-lock.json

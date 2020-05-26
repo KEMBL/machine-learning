@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2019",
+    "noEmit": true,
+    "moduleResolution": "node",
+    "pretty": true,
+    "diagnostics": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true, 
+    "strictNullChecks": true,
+    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true
+  },
+  "include": ["./src/**/*.ts", "./src/**/*.d.ts"],
+  "exclude": ["./node_modules/**/*", "./build/**/*"]
+}
