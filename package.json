@@ -12,7 +12,9 @@
     "compile": "tsc --build --verbose",
     "purge": "yarn clean:all && yarn && yarn prepare:all",
     "lint": "eslint -c .eslintrc.js --ext .ts --ignore-pattern *.d.ts ./src",
-    "lint:fix": "eslint -c .eslintrc.js --ext .ts --ignore-pattern *.d.ts --fix ./src"
+    "lint:fix": "eslint -c .eslintrc.js --ext .ts --ignore-pattern *.d.ts --fix ./src",
+    "format": "prettier --write src/**/*.ts",
+    "pre-commit": "yarn lint:fix && yarn format"
   },
   "bugs": {
     "url": "https://github.com/KEMBL/machine-learning/issues"
