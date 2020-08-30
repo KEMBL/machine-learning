@@ -58,7 +58,7 @@ export class Layer {
   private propagateNeuron = (sourceNeuron: Neuron): void => {
     for (let i = 0; i < this.neurons.length; i++) {
       const neuron = this.neurons[i];
-      neuron.input = sourceNeuron.output;
+      neuron.prediction(sourceNeuron.output);
     }
   };
 
@@ -75,28 +75,23 @@ export class Layer {
     for (let i = 0; i < this.neurons.length; i++) {
       cost += this.neurons[i].cost(outputArray[i]);
     }
-    return cost;
+    return cost / (2 * this.neurons.length);
   };
 
   backPropagate = (nextLayer: Layer): void => {
     //
-
-        //   // new weight
-        //   const newWeight = weight + this.learningDelta * cost;
-
-        //   const arrow = cost > 0 ? 'i' : 'v';
-        //   const deltaWeight = weight - newWeight;
-    
-        //   this.log(
-        //     `i:${i}, ${arrow}, cost:${fnz(cost)},  w:${fnz(newWeight)}, dw:${fnz(
-        //       deltaWeight
-        //     )}, v:${fnz(neuron.output)}, gv:${fnz(prediction)}`
-        //   );
-        //   if (Math.abs(cost) < this.error) {
-        //     break;
-        //   }
-    
-        //   weight = newWeight;
-
-  }
+    //   // new weight
+    //   const newWeight = weight + this.learningDelta * cost;
+    //   const arrow = cost > 0 ? 'i' : 'v';
+    //   const deltaWeight = weight - newWeight;
+    //   this.log(
+    //     `i:${i}, ${arrow}, cost:${fnz(cost)},  w:${fnz(newWeight)}, dw:${fnz(
+    //       deltaWeight
+    //     )}, v:${fnz(neuron.output)}, gv:${fnz(prediction)}`
+    //   );
+    //   if (Math.abs(cost) < this.error) {
+    //     break;
+    //   }
+    //   weight = newWeight;
+  };
 }

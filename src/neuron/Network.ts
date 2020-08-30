@@ -87,7 +87,7 @@ export class Network {
    * Searches of how big network result error is
    */
   private findStepError = (outputArray: number[]): number => {
-    return this.lastLayer.cost(outputArray);    
+    return this.lastLayer.cost(outputArray);
   };
 
   /**

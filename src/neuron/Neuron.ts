@@ -8,6 +8,7 @@ export class Neuron {
   private name = '';
   private inputValue = 0;
   private activatedValue = 0;
+  private _weight = 0;
 
   public get output(): number {
     return this.activatedValue;
@@ -17,7 +18,15 @@ export class Neuron {
     this.activatedValue = value;
   }
 
-  public set input(x: number) {
+  public get weight(): number {
+    return this._weight;
+  }
+
+  public set weight(value: number) {
+    this._weight = value;
+  }
+
+  private set input(x: number) {
     this.inputValue = x + Configuration.bias;
     this.activatedValue = SharedFunctions.activationFunction(this.inputValue);
     this.log(
@@ -27,14 +36,15 @@ export class Neuron {
 
   public init(layerId: number, index: number): void {
     this.name = `${layerId}_${index}`;
+    this._weight = Math.random();
   }
 
   public cost(expected: number): number {
     return SharedFunctions.costFunction(expected, this.activatedValue);
   }
 
-  public prediction(weight: number, x: number): number {
-    this.input = weight * x;
+  public prediction(x: number): number {
+    this.input = this._weight * x;
     return this.output;
   }
 
