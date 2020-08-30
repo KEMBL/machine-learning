@@ -9,7 +9,8 @@ export class Layer {
   public get isFirst(): boolean {
     return this.layerId === 0;
   }
-  private neurons: Neuron[] = [];
+
+  public neurons: Neuron[] = [];
 
   constructor(private layerId: number, private neuronsAmount: number) {
     this.init();
@@ -79,6 +80,15 @@ export class Layer {
   };
 
   backPropagate = (nextLayer: Layer): void => {
+    for (let i = 0; i < this.neurons.length; i++) {
+      for (let j = 0; j < nextLayer.neurons.length; j++) {
+        // cost += this.neurons[i].cost(outputArray[i]);
+      }
+    }
+
+    //const dy = SharedFunctions.activationFunctionPrime(newValue);
+    //const newWeight = weight + this.ldelta * cost * dy * this.input;
+
     //
     //   // new weight
     //   const newWeight = weight + this.learningDelta * cost;
