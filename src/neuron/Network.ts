@@ -1,209 +1,159 @@
-import { Neuron } from './Neuron';
-import { Configuration } from './configuration/Configuration';
-import { StringFunctions } from './utilities/StringFunctions';
+import { Layer, StringFunctions } from './';
 
+// shortcut to rounding function
+// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 const fnz = StringFunctions.fnz;
 
+/**
+ * Feedforward network with back propagation
+ */
 export class Network {
-  /** input value */
-  public input = 1.0;
-  /** value which we want to achieve for given input */
-  public target = 40.0;
-  public error = 0.0001;
+  public static currentStep = 0;
+
+  private debug = false;
+  private name = 'Nt ';
+
+  /** criteria to end learning */
+  public maxError = 0.0001;
+
+  /** maximum learn steps to learn  */
+  public maxSteps = 2000;
+
+  /** learning step */
   public ldelta = 0.01;
-  public maxSteps = 1000;
-  // private neurons: Neuron[] = [];8
 
-  //private i: number[];
+  private layers: Layer[] = [];
 
-  constructor() {
-    //this.i = [0,1,2];
+  private lastLayer!: Layer;
+
+  constructor(
+    inputs: number,
+    maxSteps: number,
+    maxCostError: number,
+    ldelta: number,
+    debug?: boolean
+  ) {
+    this.maxSteps = maxSteps;
+    this.maxError = maxCostError;
+    this.ldelta = ldelta;
+    this.debug = !!debug;
+
+    this.addLayer(inputs); // inuts
   }
-  /*
-  private init = (inNum:number, oNum) => {
-    this.neurons = [];
-    for(let i = 0; i < inNum; i++)
-      {
-        this.neurons.push(new Neuron);
-        this.neurons[i].init();
-      }
-  }
-*/
 
-  public testNeuron = (type = 2): void => {
-    switch (type) {
-      case 1:
-        this.testNeuronGw();
+  /** Adds new layer */
+  addLayer = (neuronsCount: number): void => {
+    const layerId = this.layers.length;
+    const layer = new Layer(layerId, neuronsCount, this.debug);
+    this.layers.push(layer);
+    this.lastLayer = layer;
+  };
+
+  /** Returns output of the last layer */
+  output = (): number[] => {
+    return this.lastLayer.output();
+  };
+
+  /** Makes learning cycles */
+  learn = (inputArray: number[], outputArray: number[]): void => {
+    this.layers[0].setOutput(inputArray);
+    for (let i = 0; i < this.maxSteps; i++) {
+      this.log(`Learn step ${i}`);
+      Network.currentStep = i;
+      const error = this.learnStep(outputArray);
+      if (error <= this.maxError) {
         break;
-      case 2:
-        this.testNeuronReal();
-        break;
-      default:
-        this.testNeuronUnbounded();
-        break;
+      }
     }
   };
 
-  public testNeuronReal = (): void => {
-    const neuron = new Neuron();
-    //neuron.init(1, 1);
+  /**
+   * Performs one learning step
+   */
+  private learnStep = (outputArray: number[]): number => {
+    let error = 1;
+    this.propagate();
 
-    // console.log(`0.12356 :${fnz(0.12356)}`);
-    //  console.log(`1.00165 :${fnz(1.00165)}`);
-    //   console.log(`0.000123 :${fnz(0.000123)}`);
-    //  console.log(`0.0000017 :${fnz(0.0000017)}`);
-    //  console.log(`10.03001 :${fnz(10.03001)}`);
+    // look at error value
+    error = this.findStepError(outputArray);
+    this.log(`Res1`, fnz(error), '<=?', this.maxError);
+    if (error <= this.maxError) {
+      this.log(`Res: ${fnz(error)} < ${this.maxError}`);
+      return error;
+    }
 
-    //  return;
+    // new weights count
+    this.backPropagation(outputArray);
 
-    //let value = 0;
-    this.target = Configuration.activationFunction(this.target);
-    //this.output = Math.random()*100;
-    let weight = 2; //Math.random()*5.0;
-    console.log(`init o:${this.target}, w:${weight}, ld:${this.ldelta}, e:${this.error}`);
+    console.log('Step weights', this.getWeights());
 
-    for (let i = 0; i < this.maxSteps; i++) {
-      // forward propagation
-      const prediction = neuron.prediction(weight, this.input);
+    return error;
+  };
 
-      // error find
-      const cost = neuron.cost(this.target);
-
-      // new weight
-      //const dy = 1.0;
-      const dy = Configuration.activationFunctionPrime(prediction);
-      //const pD = this.ldelta * cost;
-      //const mDelta = Math.abs(pD) > this.ldelta ? pD : cost;
-
-      //const pD2 = mDelta * dy;
-      //const pDelta = Math.abs(pD2) > dy ? pD2 : mDelta;
-
-      const ccost = Math.abs(cost) > 1 ? cost : Math.sign(cost);
-
-      //const newWeight = weight + pDelta; // this.ldelta * delta * dy * this.input;
-      //const newWeight = weight + this.ldelta * cost * dy * this.input;
-      const newWeight = weight + this.ldelta * ccost;
-      const arrow = cost > 0 ? 'i' : 'v';
-      const deltaWeight = weight - newWeight;
-
-      console.log(`i:${i}, ${arrow}, cost:${fnz(cost)},  w:${fnz(newWeight)}, dw:${fnz(deltaWeight)}, v:${fnz(neuron.output)}, gv:${fnz(prediction)}, dy:${fnz(dy)}`);
-      if (Math.abs(cost) < this.error) {
-        break;
+  /**
+   * Propagate input values through all network
+   */
+  private propagate = (): void => {
+    let previousLayer: Layer | undefined;
+    for (const layer of this.layers) {
+      if (previousLayer !== undefined) {
+        layer.propagate(previousLayer);
       }
-
-      weight = newWeight;
-      // value = newValue;
+      previousLayer = layer;
     }
   };
 
-  public testNeuronUnbounded = (): void => {
-    //let value = 0;
-    this.target = Configuration.activationFunction(this.target);
-    //this.output = Math.random()*100;
-    let weight = 2; //Math.random()*5.0;
-    console.log(`init o:${this.target}, w:${weight}, ld:${this.ldelta}, e:${this.error}`);
+  /**
+   * Searches of how big network result error is
+   */
+  public findStepError = (outputArray: number[]): number => {
+    const cost = this.lastLayer.cost(outputArray);
+    this.log(`Cost error search`, fnz(cost));
+    return cost;
+  };
 
-    for (let i = 0; i < this.maxSteps; i++) {
-      // forward propagation
-      let value = this.input * weight;
-      //const newValue = value;
-      const newValue = Configuration.activationFunction(value);
-
-      // error find
-      const delta = this.target - newValue; // take sign only?
-
-      // new weight
-      //const dy = 1.0;
-      const dy = Configuration.activationFunctionPrime(newValue);
-      const pD = this.ldelta * delta;
-      const mDelta = Math.abs(pD) > this.ldelta ? pD : delta;
-
-      const pD2 = mDelta * dy;
-      const pDelta = Math.abs(pD2) > dy ? pD2 : mDelta;
-
-      const newWeight = weight + pDelta; // this.ldelta * delta * dy * this.input;
-      const arrow = delta > 0 ? 'i' : 'v';
-      const deltaWeight = weight - newWeight;
-      console.log(
-        `i:${i}, ${arrow}, d:${delta.toFixed(3)},  w:${newWeight.toFixed(3)}, dw:${deltaWeight.toFixed(3)}, v:${value.toFixed(3)}, gv:${newValue.toFixed(3)}, dy:${dy.toFixed(
-          3
-        )}, pD:${pD.toFixed(3)}, pD2:${pD2.toFixed(3)}`
+  /**
+   * Count new weights
+   */
+  private backPropagation = (outputArray: number[]): void => {
+    this.log(`Back propagation`);
+    let previousLayer: Layer | undefined = undefined;
+    let nextLayerOutputArray = outputArray;
+    for (const layer of this.layers.slice().reverse()) {
+      nextLayerOutputArray = layer.countErrors(
+        nextLayerOutputArray,
+        previousLayer
       );
-      if (Math.abs(delta) < this.error) {
-        break;
-      }
+      previousLayer = layer;
+    }
 
-      weight = newWeight;
-      value = newValue;
+    for (const layer of this.layers) {
+      layer.correctWeights(this.ldelta);
     }
   };
 
-  public testNeuronGw = (): void => {
-    //let value = 0;
-    this.target = Configuration.activationFunction(this.target);
-    //this.output = Math.random()*100;
-    let weight = 2; //Math.random()*5.0;
-    console.log(`init o:${this.target}, w:${weight}, ld:${this.ldelta}, e:${this.error}`);
-
-    for (let i = 0; i < this.maxSteps; i++) {
-      // forward propagation
-      let value = this.input * weight;
-      //const newValue = value;
-      const newValue = Configuration.activationFunction(value);
-
-      // error find
-      const delta = this.target - newValue; // take sign only?
-
-      // new weight
-      //const dy = 1.0;
-      const dy = Configuration.activationFunctionPrime(newValue);
-      const pD = this.ldelta * delta;
-      const mDelta = Math.abs(pD) > this.ldelta ? pD : delta;
-
-      const pD2 = mDelta * dy;
-      const pDelta = Math.abs(pD2) > dy ? pD2 : mDelta;
-
-      const newWeight = weight + pDelta; // this.ldelta * delta * dy * this.input;
-      const arrow = delta > 0 ? 'i' : 'v';
-      const deltaWeight = weight - newWeight;
-      console.log(
-        `i:${i}, ${arrow}, d:${delta.toFixed(3)},  w:${newWeight.toFixed(3)}, dw:${deltaWeight.toFixed(3)}, v:${value.toFixed(3)}, gv:${newValue.toFixed(3)}, dy:${dy.toFixed(
-          3
-        )}, pD:${pD.toFixed(3)}, pD2:${pD2.toFixed(3)}`
-      );
-      if (Math.abs(delta) < this.error) {
-        break;
-      }
-
-      weight = newWeight;
-      value = newValue;
-    }
-  };
-  /*
-public testNeuronOld = () => {
-    const n = new Neuron();
-    n.init();
-
-    for (let i = 0; i < 100; i++) {
-      n.value = this.input;
-
-      const deltaOut = n.value - this.output;
-      const df = Configuration.activationFunctionDf(n.value);
-      const newWeight =
-            n.weight + this.delta * deltaOut * this.input * df;
-
-      console.log(`nw correction i:${i}, d:${delta}, e:${this.error}, ow:${n.weight}, nw:${newWeight}`);
-      if (delta < this.error) {
-        break;
-      }
-
-      n.weight = newWeight;
+  public initWeights = (weights: number[][][]): void => {
+    this.log('Nw', weights);
+    for (let i = 1; i < this.layers.length; i++) {
+      this.layers[i].initWeights(weights[i - 1]);
     }
   };
 
-  private countValues = () =>
-  {
+  /** Debug method. Allows to set weights directly */
+  public getWeights = (): number[][][] => {
+    // this.log('GNe', weights);
+    const weights: number[][][] = [];
+    for (let i = 1; i < this.layers.length; i++) {
+      weights.push(this.layers[i].getWeights());
+    }
+    return weights;
+  };
 
+  private log = (logLine: string, ...args: unknown[]): void => {
+    if (!this.debug) {
+      return;
+    }
 
-  }*/
+    StringFunctions.log(`${this.name}: ${logLine}`, ...args);
+  };
 }
