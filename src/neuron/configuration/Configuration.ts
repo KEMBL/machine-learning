@@ -1,13 +1,10 @@
 /**
  * Main settings fo the ML system
  */
-class Configuration {
-  public bias = 1;
+export class Configuration {
+  public static bias = 1;
   /** Activation function */
-  public activationType = 'Identity';
+  public static activationType = 'Identity';
   /** Cost function */
-  public useCostFunction = 'Squared';
+  public static useCostFunction = 'Squared';
 }
-
-const configuration = new Configuration();
-export { configuration as Configuration };

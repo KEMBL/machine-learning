@@ -3,12 +3,12 @@ import { Configuration } from './Configuration';
 /**
  * Shared functions
  */
-class SharedFunctions {
+export class SharedFunctions {
   /**
    * Initial random weight interval is probably depends on elcted activation function
    * TODO: !check that
    */
-  public initialWeight = (): number => {
+  public static initialWeight = (): number => {
     switch (Configuration.activationType) {
       case 'ReLU':
         return Math.random(); // [0, 1]
@@ -27,7 +27,10 @@ class SharedFunctions {
 
   // more https://rohanvarma.me/Loss-Functions/
   // more https://github.com/trekhleb/nano-neuron
-  public costFunction = (expected: number, prediction: number): number => {
+  public static costFunction = (
+    expected: number,
+    prediction: number
+  ): number => {
     switch (Configuration.useCostFunction) {
       case 'Squared': {
         // every time returns a result in interval [0, +inf)
@@ -40,77 +43,77 @@ class SharedFunctions {
       }
       // case 'CrossEntropy':  // TODO: needs for classification
       default:
+        // Identity
         return expected - prediction;
     }
   };
 
-  public activationFunction = (x: number): number => {
+  public static activationFunction = (x: number): number => {
     switch (Configuration.activationType) {
       case 'ReLU':
-        return this.activationFunctionReLU(x);
+        return SharedFunctions.activationFunctionReLU(x);
       case 'LeakyReLU':
-        return this.activationFunctionLeakyReLU(x);
+        return SharedFunctions.activationFunctionLeakyReLU(x);
       case 'Sigmoid':
-        return this.activationFunctionSigmoid(x);
+        return SharedFunctions.activationFunctionSigmoid(x);
       default:
-        return this.activationFunctionIdentity(x);
+        // Identity
+        return SharedFunctions.activationFunctionIdentity(x);
     }
   };
 
-  public activationFunctionPrime = (x: number): number => {
+  public static activationFunctionPrime = (x: number): number => {
     switch (Configuration.activationType) {
       case 'ReLU':
-        return this.activationFunctionReLUPrime(x);
+        return SharedFunctions.activationFunctionReLUPrime(x);
       case 'LeakyReLU':
-        return this.activationFunctionLeakyReLUPrime(x);
+        return SharedFunctions.activationFunctionLeakyReLUPrime(x);
       case 'Sigmoid':
-        return this.activationFunctionSigmoidPrime(x);
+        return SharedFunctions.activationFunctionSigmoidPrime(x);
       default:
-        return this.activationFunctionIdentityPrime(x);
+        // Identity
+        return SharedFunctions.activationFunctionIdentityPrime(x);
     }
   };
 
   // more: https://en.wikipedia.org/wiki/Rectifier_(neural_networks)
-  private activationFunctionReLU = (x: number): number => {
+  private static activationFunctionReLU = (x: number): number => {
     return x > 0 ? x : 0;
   };
 
   /**
    * Streats slope as 45 degress when x > 0 and 0 degress for all other cases
    */
-  private activationFunctionReLUPrime = (x: number): number => {
+  private static activationFunctionReLUPrime = (x: number): number => {
     return x > 0 ? 1 : 0;
   };
 
-  private activationFunctionLeakyReLU = (x: number): number => {
+  private static activationFunctionLeakyReLU = (x: number): number => {
     return x > 0 ? x : 0.01 * x;
   };
 
-  private activationFunctionLeakyReLUPrime = (x: number): number => {
+  private static activationFunctionLeakyReLUPrime = (x: number): number => {
     return x > 0 ? 1 : 0.01;
   };
 
   // more: https://towardsdatascience.com/derivative-of-the-sigmoid-function-536880cf918e
-  private activationFunctionSigmoid = (x: number): number => {
+  private static activationFunctionSigmoid = (x: number): number => {
     return 1 / (1 + Math.pow(Math.E, -x));
   };
 
-  private activationFunctionSigmoidPrime = (x: number): number => {
+  private static activationFunctionSigmoidPrime = (x: number): number => {
     return (
-      this.activationFunctionSigmoid(x) *
-      (1 - this.activationFunctionSigmoid(x))
+      SharedFunctions.activationFunctionSigmoid(x) *
+      (1 - SharedFunctions.activationFunctionSigmoid(x))
     );
   };
 
-  private activationFunctionIdentity = (x: number): number => {
+  private static activationFunctionIdentity = (x: number): number => {
     return x;
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  private activationFunctionIdentityPrime = (_x: number): number => {
+  private static activationFunctionIdentityPrime = (_x: number): number => {
     return 1;
   };
 }
-
-const sharedFunctions = new SharedFunctions();
-export { sharedFunctions as SharedFunctions };

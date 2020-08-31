@@ -1,29 +1,54 @@
-import { Neuron } from './';
+import { Neuron, StringFunctions } from './';
+
+// shortcut to rounding function
+// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+// const _fnz = StringFunctions.fnz;
 
 /**
  * One neurons layer
  */
 export class Layer {
-  public debug = false;
-
-  // public get isFirst(): boolean {
-  //   return this.layerId === 0;
-  // }
-
+  private debug = false;
+  private name = '';
   public neurons: Neuron[] = [];
 
-  constructor(public layerId: number, private neuronsAmount: number) {
+  constructor(
+    public layerId: number,
+    private neuronsAmount: number,
+    debug?: boolean
+  ) {
+    this.debug = !!debug;
     this.init();
   }
 
   private init = (): void => {
     this.neurons = [];
+    this.name = `Lr ${this.layerId}`;
     for (let i = 0; i < this.neuronsAmount; i++) {
-      const neuron = new Neuron();
-      neuron.debug = this.debug;
-      neuron.init(this.layerId, i);
+      const neuronId = i + 1;
+      const neuron = new Neuron(this.layerId, neuronId, this.debug);
       this.neurons.push(neuron);
     }
+  };
+
+  /** Allows to modify weighs of neurons for debug purposes */
+  public initWeights = (weights: number[][]): void => {
+    // this.log('Lw', weights);
+    for (let i = 0; i < this.neurons.length; i++) {
+      const neuron = this.neurons[i];
+      neuron.initWeights(weights[i]);
+    }
+  };
+
+  /** Debug method. Allows to set weights directly */
+  public getWeights = (): number[][] => {
+    // this.log('GNe', weights);
+    const weights: number[][] = [];
+    for (let i = 0; i < this.neurons.length; i++) {
+      const neuron = this.neurons[i];
+      weights.push(neuron.getWeights());
+    }
+    return weights;
   };
 
   /**
@@ -32,9 +57,9 @@ export class Layer {
    */
   public setOutput = (inputVariables: number[]): void => {
     if (this.layerId !== 0) {
-      console.warn(`Init: Current layer ${this.layerId} is nor input layer!`);
+      this.log(`WARN: Current layer ${this.layerId} is not an input layer!`);
     }
-    for (let i = 0; i <= this.neurons.length; i++) {
+    for (let i = 0; i < this.neurons.length; i++) {
       this.neurons[i].output = inputVariables[i];
     }
   };
@@ -44,6 +69,10 @@ export class Layer {
    * @param sourceLayer
    */
   public propagate = (sourceLayer: Layer): void => {
+    // this.log(
+    //   `Propagate layer ${this.layerId} from layer ${sourceLayer.layerId}`,
+    //   this.neurons.length
+    // );
     for (let i = 0; i < this.neurons.length; i++) {
       this.propagateNeuron(this.neurons[i], sourceLayer);
       this.neurons[i].prediction();
@@ -55,12 +84,14 @@ export class Layer {
    * @param neuron
    */
   private propagateNeuron = (neuron: Neuron, sourceLayer: Layer): void => {
+    // this.log(`propagateNeuron`, sourceLayer.neurons.length);
     for (let i = 0; i < sourceLayer.neurons.length; i++) {
-      neuron.propagate(i, neuron.output);
+      neuron.propagate(i, sourceLayer.neurons[i].output);
+      // neuron.propagate(0, sourceLayer.neurons[i].output);
     }
   };
 
-  result = (): number[] => {
+  public output = (): number[] => {
     const resultsList: number[] = [];
     for (let i = 0; i < this.neurons.length; i++) {
       resultsList.push(this.neurons[i].output);
@@ -68,19 +99,22 @@ export class Layer {
     return resultsList;
   };
 
-  cost = (outputArray: number[]): number => {
+  public cost = (outputArray: number[]): number => {
     let cost = 0;
     for (let i = 0; i < this.neurons.length; i++) {
       cost += this.neurons[i].cost(outputArray[i]);
     }
-    return cost / (2 * this.neurons.length);
+    const layerErrorCost = cost / (2 * this.neurons.length); // TODO: ? what is the purpose of division  by 2*... ?
+    // this.log(`Lec: ${fnz(layerErrorCost)}`);
+    return layerErrorCost;
   };
 
   /** Receives values of errors on the next layer neurons */
-  countErrors = (
+  public countErrors = (
     nextLayerOutputArray: number[],
     nextLayer?: Layer
   ): number[] => {
+    this.log(`CountErrors`);
     if (this.layerId === 0) {
       return [];
     }
@@ -97,7 +131,7 @@ export class Layer {
 
       errorWeights[i] = this.neurons[i].propagationError;
     }
-
+    this.log(`PropagationError`, errorWeights);
     return errorWeights;
   };
 
@@ -112,9 +146,17 @@ export class Layer {
     return error;
   };
 
-  correctWeights = (learningDelta: number): void => {
+  public correctWeights = (learningDelta: number): void => {
     for (let i = 0; i < this.neurons.length; i++) {
       this.neurons[i].correctWeights(learningDelta);
     }
+  };
+
+  private log = (logLine: string, ...args: unknown[]): void => {
+    if (!this.debug) {
+      return;
+    }
+
+    StringFunctions.log(`${this.name}: ${logLine}`, ...args);
   };
 }

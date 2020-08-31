@@ -1,0 +1,101 @@
+
+
+
+
+Cannot solve network in 9999 steps
+interesting bug - newtork passed propagation one time in forward direction and nex time in back direction
+
+in
+
+   Configuration.bias = 1;
+    Configuration.activationType = 'Sigmoid';
+    Configuration.useCostFunction = 'Identity';
+    const inputs = [1, 0];
+    const targetOutputs = [1];
+
+    const error = 0.0001;
+    const maxSteps = 10000;
+    const ldelta = 0.1;
+    const debug = true;
+    const layers = [2, 2, 1];
+
+    // Neurons:  XYZ  X - source output, Y - layer row   Z - input Layer
+    // Debug. prefill weights
+    //  [ [layer1], [layer2], ..., [[neuron1], [neuron2], ... ], [[[weight1, weight2, ...]], [[weight1, weight2, ...]], ...], [neuron2], ... ]  ]
+    const weights = [
+      [
+        [0.13, -0.42], // w111, w211
+        [-0.34, 0.38] // w121, w221
+      ],
+      [
+        [0.25, -0.2], // w112, w212
+        [0.07, 0.32] // w122, 2222
+      ],
+      [[-0.41, 0.12]] // w113, w213
+    ];
+
+
+OUT:
+
+Nt : Learn step 9999
+Nt : Propagation
+Nr 12: Out: act(2.7451) -> 0.94
+Nr 12: prediction 0.94
+Nr 22: Out: act(3.9656) -> 0.98
+Nr 22: prediction 0.98
+Nr 11: Out: act(7.1340) -> 1.00
+Nr 11: prediction 1.00
+Nr 21: Out: act(7.8411) -> 1.00
+Nr 21: prediction 1.00
+Nr 10: Out: act(0.028) -> 0.51
+Nr 10: prediction 0.51
+Nr 20: Out: act(-0.19) -> 0.45
+Nr 20: prediction 0.45
+Nr 13: costf expec: 1.0000, act: 0.99
+Lr 3: Lec: 0 0.0050
+Lr 3: Lec: 0.0050
+Nt : Cost error search 0.0050
+Nt : Res1 0.0050 <=? 0.0001
+Nt : Back propagation
+Lr 0: CountErrors
+Lr 1: CountErrors
+Nr 10: weightError W110 = 0
+Nr 20: weightError W120 = 0
+Nr 10: weightError W210 = 0
+Nr 20: weightError W220 = 0
+Lr 1: PropagationError [ 0, 0 ]
+Lr 2: CountErrors
+Nr 11: weightError W111 = 0
+Nr 21: weightError W121 = 0
+Nr 11: weightError W211 = 0
+Nr 21: weightError W221 = 0
+Lr 2: PropagationError [ 0, 0 ]
+Lr 3: CountErrors
+Nr 12: weightError W112 = 0
+Nr 22: weightError W122 = 0
+Lr 3: PropagationError [ 0 ]
+Step weights [
+  [
+    [ 3.6557519074579687, 2.750120828433372 ],
+    [ 3.3842892480045124, 3.730466980473381 ]
+  ],
+  [
+    [ 1.7539241589012051, 1.3473803347581663 ],
+    [ 2.9805490674365664, 3.333285567708932 ]
+  ],
+  [ [ 1.7626923588248318, 2.5608905458477635 ] ]
+]
+Programm finished [ 0.9949911111648337 ] [ 1 ]
+Result weights [
+  [
+    [ 3.6557519074579687, 2.750120828433372 ],
+    [ 3.3842892480045124, 3.730466980473381 ]
+  ],
+  [
+    [ 1.7539241589012051, 1.3473803347581663 ],
+    [ 2.9805490674365664, 3.333285567708932 ]
+  ],
+  [ [ 1.7626923588248318, 2.5608905458477635 ] ]
+]
+Done in 194.45s.
+
