@@ -14,9 +14,7 @@ export class Network {
 
   private layers: Layer[] = [];
 
-  private get lastLayer(): Layer {
-    return this.layers[this.layers.length - 1];
-  }
+  private lastLayer!: Layer;
 
   constructor(maxSteps: number, error: number, ldelta: number) {
     this.maxSteps = maxSteps;
@@ -46,6 +44,8 @@ export class Network {
         break;
       }
     }
+
+    this.lastLayer = this.layers[this.layers.length - 1];
   };
 
   /**
@@ -63,7 +63,7 @@ export class Network {
       }
 
       // new weights count
-      this.backPropagation();
+      this.backPropagation(outputArray);
     }
 
     return error;
@@ -73,11 +73,10 @@ export class Network {
    * Propagate input values through all network
    */
   private propagate = (): void => {
-    let previousLayer: Layer;
+    let previousLayer: Layer | undefined;
     for (const layer of this.layers) {
-      if (!layer.isFirst) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        layer.propagate(previousLayer!);
+      if (previousLayer !== undefined) {
+        layer.propagate(previousLayer);
       }
       previousLayer = layer;
     }
@@ -93,14 +92,19 @@ export class Network {
   /**
    * Count new weights
    */
-  private backPropagation = (): void => {
-    let previousLayer: Layer;
+  private backPropagation = (outputArray: number[]): void => {
+    let previousLayer: Layer | undefined = undefined;
+    let nextLayerOutputArray = outputArray;
     for (const layer of this.layers.reverse()) {
-      if (!layer.isFirst) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        layer.backPropagate(previousLayer!);
-      }
+      nextLayerOutputArray = layer.countErrors(
+        nextLayerOutputArray,
+        previousLayer
+      );
       previousLayer = layer;
+    }
+
+    for (const layer of this.layers) {
+      layer.correctWeights(this.ldelta);
     }
   };
 }

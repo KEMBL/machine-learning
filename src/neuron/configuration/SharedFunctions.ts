@@ -4,18 +4,41 @@ import { Configuration } from './Configuration';
  * Shared functions
  */
 class SharedFunctions {
+  /**
+   * Initial random weight interval is probably depends on elcted activation function
+   * TODO: !check that
+   */
+  public initialWeight = (): number => {
+    switch (Configuration.activationType) {
+      case 'ReLU':
+        return Math.random(); // [0, 1]
+      case 'LeakyReLU':
+        return Math.random(); // [0, 1]
+      case 'Sigmoid':
+        return Math.random() - 1; // [-0.5, 0.5]
+      default: {
+        console.warn(
+          `Define initial weight function for ${Configuration.activationType} actiovation type`
+        );
+        return Math.random(); // [0, 1]
+      }
+    }
+  };
+
   // more https://rohanvarma.me/Loss-Functions/
   // more https://github.com/trekhleb/nano-neuron
   public costFunction = (expected: number, prediction: number): number => {
     switch (Configuration.useCostFunction) {
       case 'Squared': {
         // every time returns a result in interval [0, +inf)
+        // usually used for regression
         const v =
           expected * expected -
           2 * expected * prediction +
           prediction * prediction;
         return v * 0.5;
       }
+      // case 'CrossEntropy':  // TODO: needs for classification
       default:
         return expected - prediction;
     }

@@ -4,11 +4,14 @@ import { Configuration, SharedFunctions } from './configuration';
  * One neuron logic
  */
 export class Neuron {
+  public neuronId = 0;
   public debug = false;
+  public propagationError = 0;
+
   private name = '';
-  private inputValue = 0;
   private activatedValue = 0;
-  private _weight = 0;
+  private propagationSum = 0;
+  private weights: number[] = [];
 
   public get output(): number {
     return this.activatedValue;
@@ -18,35 +21,57 @@ export class Neuron {
     this.activatedValue = value;
   }
 
-  public get weight(): number {
-    return this._weight;
-  }
-
-  public set weight(value: number) {
-    this._weight = value;
-  }
-
-  private set input(x: number) {
-    this.inputValue = x + Configuration.bias;
-    this.activatedValue = SharedFunctions.activationFunction(this.inputValue);
+  private set input(value: number) {
+    this.activatedValue = SharedFunctions.activationFunction(value);
     this.log(
-      `nr ${this.name} v: ${this.inputValue} -> ${this.activatedValue}, in: ${x}`
+      `nr ${this.name} v: ${value} -> ${this.activatedValue}, in: ${value}`
     );
   }
 
-  public init(layerId: number, index: number): void {
-    this.name = `${layerId}_${index}`;
-    this._weight = Math.random();
+  public init(layerId: number, neuronId: number): void {
+    this.neuronId = neuronId;
+    this.name = `${layerId}_${neuronId}`;
   }
 
   public cost(expected: number): number {
     return SharedFunctions.costFunction(expected, this.activatedValue);
   }
 
-  public prediction(x: number): number {
-    this.input = this._weight * x;
+  public propagate(linkIndex: number, linkValue: number): number {
+    let weight = this.weights[linkIndex];
+    if (weight === undefined) {
+      weight = SharedFunctions.initialWeight(); // TODO: in order to optimize this we could prefill weights oat the init step
+      this.weights[linkIndex] = weight;
+    }
+
+    this.propagationSum += weight * linkValue;
     return this.output;
   }
+
+  /**
+   * Makes neuron prediction according to signals on inputs
+   */
+  public prediction(): void {
+    // this.state = NeuronState.Prediction;
+    this.input = this.propagationSum;
+    this.propagationSum = Configuration.bias;
+  }
+
+  public weightError = (inputId: number): number => {
+    return this.weights[inputId] * this.propagationError;
+  };
+
+  correctWeights = (learningDelta: number): void => {
+    for (let i = 0; i < this.weights.length; i++) {
+      const newWeight =
+        this.weights[i] +
+        this.propagationError *
+          SharedFunctions.activationFunctionPrime(this.output) *
+          this.propagationSum *
+          learningDelta;
+      this.weights[i] = newWeight;
+    }
+  };
 
   private log = (logLine: string, args: string[] = []): void => {
     if (!this.debug) {

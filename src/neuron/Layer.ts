@@ -6,13 +6,13 @@ import { Neuron } from './';
 export class Layer {
   public debug = false;
 
-  public get isFirst(): boolean {
-    return this.layerId === 0;
-  }
+  // public get isFirst(): boolean {
+  //   return this.layerId === 0;
+  // }
 
   public neurons: Neuron[] = [];
 
-  constructor(private layerId: number, private neuronsAmount: number) {
+  constructor(public layerId: number, private neuronsAmount: number) {
     this.init();
   }
 
@@ -44,22 +44,19 @@ export class Layer {
    * @param sourceLayer
    */
   public propagate = (sourceLayer: Layer): void => {
-    if (this.layerId === 0) {
-      return;
-    }
-    for (let i = 0; i < sourceLayer.neurons.length; i++) {
-      this.propagateNeuron(sourceLayer.neurons[i]);
+    for (let i = 0; i < this.neurons.length; i++) {
+      this.propagateNeuron(this.neurons[i], sourceLayer);
+      this.neurons[i].prediction();
     }
   };
 
   /**
-   * Takes source neuron and propagate it to all current layer neurons
-   * @param sourceNeuron
+   * Takes layer's neuron and feed it with all income signals
+   * @param neuron
    */
-  private propagateNeuron = (sourceNeuron: Neuron): void => {
-    for (let i = 0; i < this.neurons.length; i++) {
-      const neuron = this.neurons[i];
-      neuron.prediction(sourceNeuron.output);
+  private propagateNeuron = (neuron: Neuron, sourceLayer: Layer): void => {
+    for (let i = 0; i < sourceLayer.neurons.length; i++) {
+      neuron.propagate(i, neuron.output);
     }
   };
 
@@ -79,29 +76,45 @@ export class Layer {
     return cost / (2 * this.neurons.length);
   };
 
-  backPropagate = (nextLayer: Layer): void => {
-    for (let i = 0; i < this.neurons.length; i++) {
-      for (let j = 0; j < nextLayer.neurons.length; j++) {
-        // cost += this.neurons[i].cost(outputArray[i]);
-      }
+  /** Receives values of errors on the next layer neurons */
+  countErrors = (
+    nextLayerOutputArray: number[],
+    nextLayer?: Layer
+  ): number[] => {
+    if (this.layerId === 0) {
+      return [];
     }
 
-    //const dy = SharedFunctions.activationFunctionPrime(newValue);
-    //const newWeight = weight + this.ldelta * cost * dy * this.input;
+    const errorWeights: number[] = [];
+    for (let i = 0; i < this.neurons.length; i++) {
+      if (nextLayer === undefined) {
+        this.neurons[i].propagationError = this.neurons[i].cost(
+          nextLayerOutputArray[i]
+        );
+      } else {
+        this.neurons[i].propagationError = nextLayer.getWeightError(i);
+      }
 
-    //
-    //   // new weight
-    //   const newWeight = weight + this.learningDelta * cost;
-    //   const arrow = cost > 0 ? 'i' : 'v';
-    //   const deltaWeight = weight - newWeight;
-    //   this.log(
-    //     `i:${i}, ${arrow}, cost:${fnz(cost)},  w:${fnz(newWeight)}, dw:${fnz(
-    //       deltaWeight
-    //     )}, v:${fnz(neuron.output)}, gv:${fnz(prediction)}`
-    //   );
-    //   if (Math.abs(cost) < this.error) {
-    //     break;
-    //   }
-    //   weight = newWeight;
+      errorWeights[i] = this.neurons[i].propagationError;
+    }
+
+    return errorWeights;
+  };
+
+  /**
+   * Collects sum of all errors on the given weight index
+   */
+  private getWeightError = (inputId: number): number => {
+    let error = 0;
+    for (let i = 0; i < this.neurons.length; i++) {
+      error += this.neurons[i].weightError(inputId);
+    }
+    return error;
+  };
+
+  correctWeights = (learningDelta: number): void => {
+    for (let i = 0; i < this.neurons.length; i++) {
+      this.neurons[i].correctWeights(learningDelta);
+    }
   };
 }
