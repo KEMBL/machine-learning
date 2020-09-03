@@ -2,7 +2,7 @@
 
 Business logic of the neural network
 
-Feedforward neural network with backpropagation
+Feedforward neural network with backpropagation, regression
 
 - More: http://galaxy.agh.edu.pl/~vlsi/AI/backp_t_en/backprop.html
 

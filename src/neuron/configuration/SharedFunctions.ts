@@ -1,4 +1,10 @@
+import { ActivationType } from '../models';
 import { Configuration } from './Configuration';
+
+export interface ActivationFunction {
+  (x: number): number;
+  (x: number, activationType: ActivationType): number;
+}
 
 /**
  * Shared functions
@@ -16,12 +22,9 @@ export class SharedFunctions {
         return Math.random(); // [0, 1]
       case 'Sigmoid':
         return Math.random() - 1; // [-0.5, 0.5]
-      default: {
-        console.warn(
-          `Define initial weight function for ${Configuration.activationType} actiovation type`
-        );
+      default:
+        //Identity
         return Math.random(); // [0, 1]
-      }
     }
   };
 
@@ -43,13 +46,19 @@ export class SharedFunctions {
       }
       // case 'CrossEntropy':  // TODO: needs for classification
       default:
-        // Identity
+        // Default
         return expected - prediction;
     }
   };
 
-  public static activationFunction = (x: number): number => {
-    switch (Configuration.activationType) {
+  public static activationFunction: ActivationFunction = (
+    x: number,
+    activationType?: ActivationType
+  ): number => {
+    const selectedFunction = activationType
+      ? activationType
+      : Configuration.activationType;
+    switch (selectedFunction) {
       case 'ReLU':
         return SharedFunctions.activationFunctionReLU(x);
       case 'LeakyReLU':
@@ -62,8 +71,14 @@ export class SharedFunctions {
     }
   };
 
-  public static activationFunctionPrime = (x: number): number => {
-    switch (Configuration.activationType) {
+  public static activationFunctionPrime: ActivationFunction = (
+    x: number,
+    activationType?: ActivationType
+  ): number => {
+    const selectedFunction = activationType
+      ? activationType
+      : Configuration.activationType;
+    switch (selectedFunction) {
       case 'ReLU':
         return SharedFunctions.activationFunctionReLUPrime(x);
       case 'LeakyReLU':

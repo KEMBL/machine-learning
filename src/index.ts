@@ -1,22 +1,29 @@
+import { LayerConfig } from './neuron/models';
 import { Configuration, Network } from './neuron';
 import { Log } from './services';
 import { Verbosity } from './models';
 
 class Program {
   constructor() {
+    const started = new Date();
     Log.log('Programm started');
 
-    Log.verbosity = Verbosity.Info;
+    Log.verbosity = Verbosity.Warning;
     Configuration.bias = 1;
-    Configuration.activationType = 'Sigmoid';
-    Configuration.useCostFunction = 'Identity';
+    Configuration.activationType = 'ReLU'; // default
+    Configuration.useCostFunction = 'Default';
 
+    // Regression
     const networkInputs = [1, 0];
     const targetOutputs = [1];
     const maximumCostError = 0.0001;
-    const maxLearningSteps = 1;
+    const maxLearningSteps = 10000;
     const learningDelta = 0.1;
-    const layers = [2, 2, 1];
+    const layersConfig: LayerConfig[] = [
+      { neurons: 2 },
+      { neurons: 2 },
+      { neurons: 1, activationType: 'Sigmoid' }
+    ];
 
     // Fill in arrays if want to start not from random weights
     // Neurons:  XYZ  X - source output, Y - layer row   Z - input Layer
@@ -45,14 +52,14 @@ class Program {
     // ];
 
     const network = new Network(
-      layers[0],
+      layersConfig[0].neurons,
       maxLearningSteps,
       maximumCostError,
       learningDelta
     ); // error, ldelta, maxSteps
 
-    for (const neuronsCount of layers) {
-      network.addLayer(neuronsCount); // make neurons / init them / etc
+    for (const layerConfig of layersConfig) {
+      network.addLayer(layerConfig); // make neurons / init them / etc
     }
 
     if (weights.length > 0) {
@@ -64,8 +71,13 @@ class Program {
     const result = network.output();
     Log.log('Programm finished', result, targetOutputs);
     Log.log('Result weights', network.getWeights());
-    Log.log('Last step', Network.currentStep + 1);
+    Log.log('Last step', Network.currentStep);
     Log.log('Error cost', network.findStepError(targetOutputs));
+    Log.log(
+      `Finished in`,
+      new Date().getSeconds() - started.getSeconds(),
+      'seconds'
+    );
   }
 }
 

@@ -1,6 +1,7 @@
 import { Log } from '../services';
 import { Configuration, SharedFunctions } from './configuration';
 import { StringFunctions } from '.';
+import { ActivationType } from './models';
 
 // shortcut to rounding function
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -29,17 +30,25 @@ export class Neuron {
   }
 
   private set input(value: number) {
-    this.activatedValue = SharedFunctions.activationFunction(value);
+    this.activatedValue = SharedFunctions.activationFunction(
+      value,
+      this.activationType
+    );
     Log.debug(
       `Out: act(${fnz(value)}) -> ${fnz(this.activatedValue)}`,
       this.moduleName
     );
   }
 
-  constructor(layerId: number, neuronId: number) {
+  constructor(
+    layerId: number,
+    neuronId: number,
+    private activationType: ActivationType
+  ) {
     this.neuronId = neuronId;
     this.layerId = layerId;
     this.moduleName = `Nr ${neuronId}${layerId}`;
+    Log.debug(`Config: activation: ${this.activationType}`, this.moduleName);
   }
 
   public cost(expected: number): number {
@@ -97,7 +106,10 @@ export class Neuron {
   public correctWeights = (learningDelta: number): void => {
     const weightAdditionMultiplayer =
       this.propagationError *
-      SharedFunctions.activationFunctionPrime(this.output) *
+      SharedFunctions.activationFunctionPrime(
+        this.output,
+        this.activationType
+      ) *
       learningDelta;
 
     for (let i = 0; i < this.weights.length; i++) {

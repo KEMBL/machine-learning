@@ -1,4 +1,5 @@
 import { Log } from '../services';
+import { ActivationType } from './models';
 import { Neuron } from './';
 
 // shortcut to rounding function
@@ -10,18 +11,30 @@ import { Neuron } from './';
  */
 export class Layer {
   private moduleName = '';
+  private activationType: ActivationType = 'ReLU';
   public neurons: Neuron[] = [];
 
-  constructor(public layerId: number, private neuronsAmount: number) {
+  constructor(
+    public layerId: number,
+    private neuronsAmount: number,
+    activationType?: ActivationType
+  ) {
+    if (activationType) {
+      this.activationType = activationType;
+    }
     this.init();
   }
 
   private init = (): void => {
     this.neurons = [];
     this.moduleName = `Lr ${this.layerId}`;
+    Log.debug(
+      `Config: neuronsAmount ${this.neuronsAmount}, activation: ${this.activationType}`,
+      this.moduleName
+    );
     for (let i = 0; i < this.neuronsAmount; i++) {
       const neuronId = i + 1;
-      const neuron = new Neuron(this.layerId, neuronId);
+      const neuron = new Neuron(this.layerId, neuronId, this.activationType);
       this.neurons.push(neuron);
     }
   };

@@ -54,7 +54,7 @@ export class Log {
     sourceName?: string,
     ...args: unknown[]
   ): void => {
-    if (verbosity < Log._globalVerbosity) {
+    if (verbosity > Log._globalVerbosity) {
       return;
     }
 

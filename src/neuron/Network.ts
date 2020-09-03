@@ -1,5 +1,6 @@
 import { Log } from '../services';
-import { Layer, StringFunctions } from './';
+import { Layer, StringFunctions, Configuration } from './';
+import { LayerConfig } from './models';
 
 // shortcut to rounding function
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -36,24 +37,27 @@ export class Network {
     this.maxError = maxCostError;
     this.ldelta = ldelta;
 
-    this.addLayer(inputs); // inuts
+    this.addLayer({ neurons: inputs }); // inuts
   }
 
   /** Adds new layer */
-  addLayer = (neuronsCount: number): void => {
+  public addLayer = (config: LayerConfig): void => {
+    const selectedFunction = config.activationType
+      ? config.activationType
+      : Configuration.activationType;
     const layerId = this.layers.length;
-    const layer = new Layer(layerId, neuronsCount);
+    const layer = new Layer(layerId, config.neurons, selectedFunction);
     this.layers.push(layer);
     this.lastLayer = layer;
   };
 
   /** Returns output of the last layer */
-  output = (): number[] => {
+  public output = (): number[] => {
     return this.lastLayer.output();
   };
 
   /** Makes learning cycles */
-  learn = (inputArray: number[], outputArray: number[]): void => {
+  public learn = (inputArray: number[], outputArray: number[]): void => {
     this.layers[0].setOutput(inputArray);
     for (let i = 1; i <= this.maxSteps; i++) {
       Network.currentStep = i;
