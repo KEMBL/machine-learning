@@ -1,19 +1,21 @@
 import { Configuration, Network } from './neuron';
+import { Log } from './services';
+import { Verbosity } from './models';
 
 class Program {
   constructor() {
-    console.log('Programm started');
+    Log.log('Programm started');
 
+    Log.verbosity = Verbosity.Info;
     Configuration.bias = 1;
     Configuration.activationType = 'Sigmoid';
     Configuration.useCostFunction = 'Identity';
-    const inputs = [1, 0];
-    const targetOutputs = [1];
 
+    const networkInputs = [1, 0];
+    const targetOutputs = [1];
     const maximumCostError = 0.0001;
-    const maxSteps = 1000;
-    const ldelta = 0.1;
-    const debug = true;
+    const maxLearningSteps = 1;
+    const learningDelta = 0.1;
     const layers = [2, 2, 1];
 
     // Fill in arrays if want to start not from random weights
@@ -44,11 +46,11 @@ class Program {
 
     const network = new Network(
       layers[0],
-      maxSteps,
+      maxLearningSteps,
       maximumCostError,
-      ldelta,
-      debug
+      learningDelta
     ); // error, ldelta, maxSteps
+
     for (const neuronsCount of layers) {
       network.addLayer(neuronsCount); // make neurons / init them / etc
     }
@@ -57,13 +59,13 @@ class Program {
       network.initWeights(weights);
     }
 
-    network.learn(inputs, targetOutputs); // propagate / errorcost / weig\hts correction (back propagation)
+    network.learn(networkInputs, targetOutputs); // propagate / errorcost / weig\hts correction (back propagation)
     //new Network().testNeuron();
     const result = network.output();
-    console.log('Programm finished', result, targetOutputs);
-    console.log('Result weights', network.getWeights());
-    console.log('Last step', Network.currentStep + 1);
-    console.log('Error cost', network.findStepError(targetOutputs));
+    Log.log('Programm finished', result, targetOutputs);
+    Log.log('Result weights', network.getWeights());
+    Log.log('Last step', Network.currentStep + 1);
+    Log.log('Error cost', network.findStepError(targetOutputs));
   }
 }
 

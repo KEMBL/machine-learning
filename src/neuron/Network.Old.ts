@@ -1,3 +1,5 @@
+/** OLD class, temporarily is not deleted */
+
 // import { Neuron } from './Neuron';
 // import { SharedFunctions } from './configuration/SharedFunctions';
 // import { StringFunctions } from './utilities/StringFunctions';

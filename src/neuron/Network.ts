@@ -1,3 +1,4 @@
+import { Log } from '../services';
 import { Layer, StringFunctions } from './';
 
 // shortcut to rounding function
@@ -10,8 +11,7 @@ const fnz = StringFunctions.fnz;
 export class Network {
   public static currentStep = 0;
 
-  private debug = false;
-  private name = 'Nt ';
+  private moduleName = 'Nt';
 
   /** criteria to end learning */
   public maxError = 0.0001;
@@ -30,13 +30,11 @@ export class Network {
     inputs: number,
     maxSteps: number,
     maxCostError: number,
-    ldelta: number,
-    debug?: boolean
+    ldelta: number
   ) {
     this.maxSteps = maxSteps;
     this.maxError = maxCostError;
     this.ldelta = ldelta;
-    this.debug = !!debug;
 
     this.addLayer(inputs); // inuts
   }
@@ -44,7 +42,7 @@ export class Network {
   /** Adds new layer */
   addLayer = (neuronsCount: number): void => {
     const layerId = this.layers.length;
-    const layer = new Layer(layerId, neuronsCount, this.debug);
+    const layer = new Layer(layerId, neuronsCount);
     this.layers.push(layer);
     this.lastLayer = layer;
   };
@@ -57,14 +55,16 @@ export class Network {
   /** Makes learning cycles */
   learn = (inputArray: number[], outputArray: number[]): void => {
     this.layers[0].setOutput(inputArray);
-    for (let i = 0; i < this.maxSteps; i++) {
-      this.log(`Learn step ${i}`);
+    for (let i = 1; i <= this.maxSteps; i++) {
       Network.currentStep = i;
+      Log.prefix = Network.currentStep;
+      Log.debug(`Learn step ${i}`, this.moduleName);
       const error = this.learnStep(outputArray);
       if (error <= this.maxError) {
         break;
       }
     }
+    Log.prefix = undefined;
   };
 
   /**
@@ -76,16 +76,16 @@ export class Network {
 
     // look at error value
     error = this.findStepError(outputArray);
-    this.log(`Res1`, fnz(error), '<=?', this.maxError);
+    Log.debug(`Res1`, fnz(error), '<=?', this.moduleName, this.maxError);
     if (error <= this.maxError) {
-      this.log(`Res: ${fnz(error)} < ${this.maxError}`);
+      Log.debug(`Res: ${fnz(error)} < ${this.maxError}`, this.moduleName);
       return error;
     }
 
     // new weights count
     this.backPropagation(outputArray);
 
-    console.log('Step weights', this.getWeights());
+    Log.debug('Step weights', this.moduleName, this.getWeights());
 
     return error;
   };
@@ -108,7 +108,7 @@ export class Network {
    */
   public findStepError = (outputArray: number[]): number => {
     const cost = this.lastLayer.cost(outputArray);
-    this.log(`Cost error search`, fnz(cost));
+    Log.debug(`Cost error search`, this.moduleName, fnz(cost));
     return cost;
   };
 
@@ -116,7 +116,7 @@ export class Network {
    * Count new weights
    */
   private backPropagation = (outputArray: number[]): void => {
-    this.log(`Back propagation`);
+    Log.debug(`Back propagation`, this.moduleName);
     let previousLayer: Layer | undefined = undefined;
     let nextLayerOutputArray = outputArray;
     for (const layer of this.layers.slice().reverse()) {
@@ -133,7 +133,7 @@ export class Network {
   };
 
   public initWeights = (weights: number[][][]): void => {
-    this.log('Nw', weights);
+    Log.debug('Nw', this.moduleName, weights);
     for (let i = 1; i < this.layers.length; i++) {
       this.layers[i].initWeights(weights[i - 1]);
     }
@@ -147,13 +147,5 @@ export class Network {
       weights.push(this.layers[i].getWeights());
     }
     return weights;
-  };
-
-  private log = (logLine: string, ...args: unknown[]): void => {
-    if (!this.debug) {
-      return;
-    }
-
-    StringFunctions.log(`${this.name}: ${logLine}`, ...args);
   };
 }

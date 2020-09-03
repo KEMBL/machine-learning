@@ -1,3 +1,4 @@
+import { Log } from '../services';
 import { Configuration, SharedFunctions } from './configuration';
 import { StringFunctions } from '.';
 
@@ -13,8 +14,7 @@ export class Neuron {
   public layerId = 0;
   public propagationError = 0;
 
-  private debug = false;
-  private name = '';
+  private moduleName = '';
   private activatedValue = 0;
   private propagationSum = Configuration.bias;
   private inputs: number[] = [];
@@ -30,19 +30,21 @@ export class Neuron {
 
   private set input(value: number) {
     this.activatedValue = SharedFunctions.activationFunction(value);
-    this.log(`Out: act(${fnz(value)}) -> ${fnz(this.activatedValue)}`);
+    Log.debug(
+      `Out: act(${fnz(value)}) -> ${fnz(this.activatedValue)}`,
+      this.moduleName
+    );
   }
 
-  constructor(layerId: number, neuronId: number, debug?: boolean) {
+  constructor(layerId: number, neuronId: number) {
     this.neuronId = neuronId;
     this.layerId = layerId;
-    this.name = `Nr ${neuronId}${layerId}`;
-    this.debug = !!debug;
+    this.moduleName = `Nr ${neuronId}${layerId}`;
   }
 
   public cost(expected: number): number {
     //this.log(`costf expec: ${fnz(expected)}, act: ${fnz(this.output)}`);
-    this.log(`costf expec: ${expected}, act: ${this.output}`);
+    Log.debug(`costf expec: ${expected}, act: ${this.output}`, this.moduleName);
     const errorCost = SharedFunctions.costFunction(expected, this.output);
     return errorCost;
   }
@@ -80,12 +82,15 @@ export class Neuron {
     this.input = this.propagationSum;
     this.propagationSum = Configuration.bias;
 
-    this.log(`prediction ${fnz(this.output)}`);
+    Log.debug(`prediction ${fnz(this.output)}`, this.moduleName);
   }
 
   public weightError = (inputId: number): number => {
     const error = this.weights[inputId] * this.propagationError;
-    this.log(`weightError ${this.wIndex(inputId)} = ${fnz(error)}`);
+    Log.debug(
+      `weightError ${this.wIndex(inputId)} = ${fnz(error)}`,
+      this.moduleName
+    );
     return error;
   };
 
@@ -116,12 +121,4 @@ export class Neuron {
 
   private wIndex = (inputId: number): string =>
     `W${inputId + 1}${this.neuronId}${this.layerId}`;
-
-  private log = (logLine: string, ...args: unknown[]): void => {
-    if (!this.debug) {
-      return;
-    }
-
-    StringFunctions.log(`${this.name}: ${logLine}`, ...args);
-  };
 }

@@ -1,4 +1,5 @@
-import { Neuron, StringFunctions } from './';
+import { Log } from '../services';
+import { Neuron } from './';
 
 // shortcut to rounding function
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -8,25 +9,19 @@ import { Neuron, StringFunctions } from './';
  * One neurons layer
  */
 export class Layer {
-  private debug = false;
-  private name = '';
+  private moduleName = '';
   public neurons: Neuron[] = [];
 
-  constructor(
-    public layerId: number,
-    private neuronsAmount: number,
-    debug?: boolean
-  ) {
-    this.debug = !!debug;
+  constructor(public layerId: number, private neuronsAmount: number) {
     this.init();
   }
 
   private init = (): void => {
     this.neurons = [];
-    this.name = `Lr ${this.layerId}`;
+    this.moduleName = `Lr ${this.layerId}`;
     for (let i = 0; i < this.neuronsAmount; i++) {
       const neuronId = i + 1;
-      const neuron = new Neuron(this.layerId, neuronId, this.debug);
+      const neuron = new Neuron(this.layerId, neuronId);
       this.neurons.push(neuron);
     }
   };
@@ -57,7 +52,10 @@ export class Layer {
    */
   public setOutput = (inputVariables: number[]): void => {
     if (this.layerId !== 0) {
-      this.log(`WARN: Current layer ${this.layerId} is not an input layer!`);
+      Log.debug(
+        `WARN: Current layer ${this.layerId} is not an input layer!`,
+        this.moduleName
+      );
     }
     for (let i = 0; i < this.neurons.length; i++) {
       this.neurons[i].output = inputVariables[i];
@@ -114,7 +112,7 @@ export class Layer {
     nextLayerOutputArray: number[],
     nextLayer?: Layer
   ): number[] => {
-    this.log(`CountErrors`);
+    Log.debug(`CountErrors`, this.moduleName);
     if (this.layerId === 0) {
       return [];
     }
@@ -131,7 +129,7 @@ export class Layer {
 
       errorWeights[i] = this.neurons[i].propagationError;
     }
-    this.log(`PropagationError`, errorWeights);
+    Log.debug(`PropagationError`, this.moduleName, errorWeights);
     return errorWeights;
   };
 
@@ -150,13 +148,5 @@ export class Layer {
     for (let i = 0; i < this.neurons.length; i++) {
       this.neurons[i].correctWeights(learningDelta);
     }
-  };
-
-  private log = (logLine: string, ...args: unknown[]): void => {
-    if (!this.debug) {
-      return;
-    }
-
-    StringFunctions.log(`${this.name}: ${logLine}`, ...args);
   };
 }
