@@ -5,24 +5,71 @@ import { Verbosity } from './models';
 
 class Program {
   constructor() {
-    const started = new Date();
+    const startedTime = new Date();
     Log.log('Programm started');
 
     Log.verbosity = Verbosity.Warning;
     Configuration.bias = 1;
     Configuration.activationType = 'ReLU'; // default
-    Configuration.useCostFunction = 'Default';
+    Configuration.useCostFunction = 'Squared';
 
     // Regression
-    const networkInputs = [1, 0];
-    const targetOutputs = [1];
+    const inputsAmount = 1;
+    function* generatorSinus(
+      inputsAmount: number
+    ): Generator<
+      {
+        inputArray: number[];
+        outputArray: number[];
+      },
+      void,
+      unknown
+    > {
+      let angle = 1; // degress
+      const max = 360;
+      while (true) {
+        const set = {
+          inputArray: Array<number>(inputsAmount).fill(0),
+          outputArray: Array<number>(1)
+        };
+        const degress = (angle * Math.PI) / 180;
+        set.inputArray[0] = degress;
+        set.outputArray = [Math.sin(degress)];
+        yield set;
+        angle = ++angle % max;
+      }
+    }
+
+    // const gen = generatorSinus(2);
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+    // console.log(gen.next());
+
+    // if(startedTime.getTime() !==1) return;
+
+    // 2,2,1- 41 sec
+    // 3,3,1- 60 sec
+    // 3,3,3,1 - 80 sec
+
+    //const networkInputs = [[1, 0]];
+    const targetOutputs = [[0.5]];
     const maximumCostError = 0.0001;
-    const maxLearningSteps = 10000;
+    const maxEpochsCount = 10000;
     const learningDelta = 0.1;
     const layersConfig: LayerConfig[] = [
-      { neurons: 2 },
-      { neurons: 2 },
+      { neurons: 3 },
+      { neurons: 3 },
+      { neurons: 3 },
+      // { neurons: 20 },
+      //       { neurons: 3 },
       { neurons: 1, activationType: 'Sigmoid' }
+      //{ neurons: 1 }
     ];
 
     // Fill in arrays if want to start not from random weights
@@ -30,7 +77,7 @@ class Program {
     // Debug. prefill weights
     //  [ [layer1], [layer2], ..., [[neuron1], [neuron2], ... ], [[[weight1, weight2, ...]], [[weight1, weight2, ...]], ...], [neuron2], ... ]  ]
     const weights: number[][][] = [];
-    // const weights: number[] = [
+    // const weights: number[][][] = [
     //   [
     //     [0.13, -0.42], // w111, w211
     //     [-0.34, 0.38] // w121, w221
@@ -52,8 +99,8 @@ class Program {
     // ];
 
     const network = new Network(
-      layersConfig[0].neurons,
-      maxLearningSteps,
+      inputsAmount,
+      maxEpochsCount,
       maximumCostError,
       learningDelta
     ); // error, ldelta, maxSteps
@@ -66,18 +113,50 @@ class Program {
       network.initWeights(weights);
     }
 
-    network.learn(networkInputs, targetOutputs); // propagate / errorcost / weig\hts correction (back propagation)
+    //network.train(networkInputs, targetOutputs); // propagate / errorcost / weig\hts correction (back propagation)
+    network.train(generatorSinus, 360); // propagate / errorcost / weig\hts correction (back propagation)
     //new Network().testNeuron();
     const result = network.output();
     Log.log('Programm finished', result, targetOutputs);
     Log.log('Result weights', network.getWeights());
-    Log.log('Last step', Network.currentStep);
-    Log.log('Error cost', network.findStepError(targetOutputs));
+    Log.log('Error cost', network.networkError());
+    Log.log('Epochs', network.epochsCount());
     Log.log(
       `Finished in`,
-      new Date().getSeconds() - started.getSeconds(),
+      (new Date().getTime() - startedTime.getTime()) * 0.001,
       'seconds'
     );
+
+    if (startedTime.getTime() === -1) {
+      Log.log('');
+      Log.log('Prediction');
+      // for (let i = 0; i < networkInputs.length; i++) {
+      //   const error = network.predict(networkInputs[i], targetOutputs[i]);
+      //   Log.log(
+      //     `Step ${i + 1}, Error cost`,
+      //     error,
+      //     network.output(),
+      //     targetOutputs[i]
+      //   );
+      // }
+
+      //   const generator = generatorSinus(inputsAmount);
+      //   for (let i = 0; i < 3; i++) {
+      //     const sample = generator.next();
+      //     if (sample.value) {
+      //       const error = network.predict(
+      //         sample.value.inputArray,
+      //         sample.value.outputArray
+      //       );
+      //       Log.log(
+      //         `Step ${i + 1}, Error cost`,
+      //         error,
+      //         network.output(),
+      //         sample.value.outputArray
+      //       );
+      //     }
+      //   }
+    }
   }
 }
 

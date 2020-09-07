@@ -69,13 +69,14 @@ export class Neuron {
       weight = SharedFunctions.initialWeight(); // TODO: in order to optimize this we could prefill weights oat the init step
       this.weights[inputId] = weight;
     }
-    // this.log(`${this.wIndex(inputId)} = ${fnz(weight)}`);
+
+    // Log.debug(`${this.wIndex(inputId)} = ${fnz(weight)}`);
 
     this.inputs[inputId] = linkValue;
 
-    // const pSum = this.propagationSum;
+    //const pSum = this.propagationSum;
     this.propagationSum += weight * linkValue;
-    // this.log(
+    // Log.debug(
     //   `Sum: ${fnz(pSum)} -> ${fnz(this.propagationSum)} `,
     //   fnz(weight),
     //   '*',

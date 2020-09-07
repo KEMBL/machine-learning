@@ -16,6 +16,15 @@ export class Log {
     Log.logLine(logLine, ...args);
   };
 
+  static throw = (
+    logLine: string,
+    sourceName?: string,
+    ...args: unknown[]
+  ): void => {
+    Log.error(logLine, sourceName, ...args);
+    throw new Error(logLine);
+  };
+
   static error = (
     logLine: string,
     sourceName?: string,

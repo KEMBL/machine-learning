@@ -41,3 +41,4 @@ Q&A
 2) how to normalize w random selection? taking in account that P to select w [0,1] should be = P to select w (1,inf]? 0 -> 45 - > 90 degrees
 any random value close to 1 would be ok?
 3) why if input is greater then output it takes less steps to find a result?
+4) How is better to represent examples from the learning set? Random or one by one?

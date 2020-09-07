@@ -10,9 +10,12 @@ import { Neuron } from './';
  * One neurons layer
  */
 export class Layer {
+  public neurons: Neuron[] = [];
+
   private moduleName = '';
   private activationType: ActivationType = 'ReLU';
-  public neurons: Neuron[] = [];
+  /** Last found error cost */
+  private layerErrorCost = 0;
 
   constructor(
     public layerId: number,
@@ -24,6 +27,10 @@ export class Layer {
     }
     this.init();
   }
+
+  public toString = (): string => {
+    return this.moduleName;
+  };
 
   private init = (): void => {
     this.neurons = [];
@@ -85,6 +92,13 @@ export class Layer {
     //   this.neurons.length
     // );
     for (let i = 0; i < this.neurons.length; i++) {
+      Log.debug(
+        `propagate`,
+        this.moduleName,
+        i,
+        this.neurons.length,
+        `${sourceLayer}`
+      );
       this.propagateNeuron(this.neurons[i], sourceLayer);
       this.neurons[i].prediction();
     }
@@ -95,7 +109,12 @@ export class Layer {
    * @param neuron
    */
   private propagateNeuron = (neuron: Neuron, sourceLayer: Layer): void => {
-    // this.log(`propagateNeuron`, sourceLayer.neurons.length);
+    Log.debug(
+      `propagateNeuron`,
+      this.moduleName,
+      sourceLayer.neurons.length,
+      `${sourceLayer}`
+    );
     for (let i = 0; i < sourceLayer.neurons.length; i++) {
       neuron.propagate(i, sourceLayer.neurons[i].output);
       // neuron.propagate(0, sourceLayer.neurons[i].output);
@@ -115,9 +134,13 @@ export class Layer {
     for (let i = 0; i < this.neurons.length; i++) {
       cost += this.neurons[i].cost(outputArray[i]);
     }
-    const layerErrorCost = cost / (2 * this.neurons.length); // TODO: ? what is the purpose of division  by 2*... ?
+    this.layerErrorCost = cost / (2 * this.neurons.length); // TODO: ? what is the purpose of division  by 2*... ?
     // this.log(`Lec: ${fnz(layerErrorCost)}`);
-    return layerErrorCost;
+    return this.layerErrorCost;
+  };
+
+  public costError = (): number => {
+    return this.layerErrorCost;
   };
 
   /** Receives values of errors on the next layer neurons */
