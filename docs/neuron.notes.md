@@ -58,3 +58,8 @@ Q&A
 any random value close to 1 would be ok?
 3) why if input is greater then output it takes less steps to find a result?
 4) How is better to represent examples from the learning set? Random or one by one?
+
+---
+
+two funbctions layer.cost and layer.countErrors
+cost error should be sum of all erroro sygnals othervice we a re not control network fully

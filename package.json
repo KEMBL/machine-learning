@@ -33,8 +33,11 @@
     "type": "git",
     "url": "https://github.com/KEMBL/machine-learning.git"
   },
-  "dependencies": {},
+  "dependencies": {    
+    "nopt": "^5.0.0"
+  },
   "devDependencies": {
+    "@types/nopt": "^3.0.29",
     "@types/node": "^11.11.3",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.30.0",

@@ -14,8 +14,8 @@ export class Layer {
 
   private moduleName = '';
   private activationType: ActivationType = 'ReLU';
-  /** Last found error cost */
-  private layerErrorCost = 0;
+  /** Layer absolute error signals sum */
+  private layerErrorSignal = 0;
 
   constructor(
     public layerId: number,
@@ -39,8 +39,7 @@ export class Layer {
       `Config: neuronsAmount ${this.neuronsAmount}, activation: ${this.activationType}`,
       this.moduleName
     );
-    for (let i = 0; i < this.neuronsAmount; i++) {
-      const neuronId = i + 1;
+    for (let neuronId = 0; neuronId < this.neuronsAmount; neuronId++) {
       const neuron = new Neuron(this.layerId, neuronId, this.activationType);
       this.neurons.push(neuron);
     }
@@ -49,9 +48,9 @@ export class Layer {
   /** Allows to modify weighs of neurons for debug purposes */
   public initWeights = (weights: number[][]): void => {
     // this.log('Lw', weights);
-    for (let i = 0; i < this.neurons.length; i++) {
-      const neuron = this.neurons[i];
-      neuron.initWeights(weights[i]);
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+      const neuron = this.neurons[neuronId];
+      neuron.initWeights(weights[neuronId]);
     }
   };
 
@@ -59,8 +58,8 @@ export class Layer {
   public getWeights = (): number[][] => {
     // this.log('GNe', weights);
     const weights: number[][] = [];
-    for (let i = 0; i < this.neurons.length; i++) {
-      const neuron = this.neurons[i];
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+      const neuron = this.neurons[neuronId];
       weights.push(neuron.getWeights());
     }
     return weights;
@@ -77,8 +76,8 @@ export class Layer {
         this.moduleName
       );
     }
-    for (let i = 0; i < this.neurons.length; i++) {
-      this.neurons[i].output = inputVariables[i];
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+      this.neurons[neuronId].output = inputVariables[neuronId];
     }
   };
 
@@ -91,16 +90,16 @@ export class Layer {
     //   `Propagate layer ${this.layerId} from layer ${sourceLayer.layerId}`,
     //   this.neurons.length
     // );
-    for (let i = 0; i < this.neurons.length; i++) {
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
       Log.debug(
         `propagate`,
         this.moduleName,
-        i,
+        neuronId,
         this.neurons.length,
         `${sourceLayer}`
       );
-      this.propagateNeuron(this.neurons[i], sourceLayer);
-      this.neurons[i].prediction();
+      this.propagateNeuron(this.neurons[neuronId], sourceLayer);
+      this.neurons[neuronId].prediction();
     }
   };
 
@@ -115,8 +114,8 @@ export class Layer {
       sourceLayer.neurons.length,
       `${sourceLayer}`
     );
-    for (let i = 0; i < sourceLayer.neurons.length; i++) {
-      neuron.propagate(i, sourceLayer.neurons[i].output);
+    for (let neuronId = 0; neuronId < sourceLayer.neurons.length; neuronId++) {
+      neuron.propagate(neuronId, sourceLayer.neurons[neuronId].output);
       // neuron.propagate(0, sourceLayer.neurons[i].output);
     }
   };
@@ -129,44 +128,60 @@ export class Layer {
     return resultsList;
   };
 
-  public cost = (outputArray: number[]): number => {
-    let cost = 0;
-    for (let i = 0; i < this.neurons.length; i++) {
-      cost += this.neurons[i].cost(outputArray[i]);
-    }
-    this.layerErrorCost = cost / (2 * this.neurons.length); // TODO: ? what is the purpose of division  by 2*... ?
-    // this.log(`Lec: ${fnz(layerErrorCost)}`);
-    return this.layerErrorCost;
+  /** Sum of error signals of ll layer neurons */
+  // public findLayerErrorSignalSum = (outputArray: number[]): number => {
+  //   let cost = 0;
+  //   for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+  //     cost += this.neurons[neuronId].findErrorSignal(outputArray[neuronId]);
+  //   }
+  //   this.layerErrorCost = cost;// / this.neurons.length;
+  //   // this.log(`Lec: ${fnz(layerErrorCost)}`);
+  //   return this.layerErrorCost;
+  // };
+
+  public errorSignalSum = (): number => {
+    return this.layerErrorSignal;
   };
 
-  public costError = (): number => {
-    return this.layerErrorCost;
-  };
-
-  /** Receives values of errors on the next layer neurons */
-  public countErrors = (
-    nextLayerOutputArray: number[],
+  /** Receives values of error signals of the next layer neurons and counts self error signals */
+  public countErrorSignals = (
+    nextLayerErrorSignalsArray: number[],
     nextLayer?: Layer
   ): number[] => {
     Log.debug(`CountErrors`, this.moduleName);
     if (this.layerId === 0) {
+      // the first layer - nothing to do
       return [];
     }
 
-    const errorWeights: number[] = [];
-    for (let i = 0; i < this.neurons.length; i++) {
+    this.layerErrorSignal = 0;
+    const errorSignals: number[] = [];
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+      let errorSignal = 0;
       if (nextLayer === undefined) {
-        this.neurons[i].propagationError = this.neurons[i].cost(
-          nextLayerOutputArray[i]
+        // last layer counts error signal agains expected output values
+        errorSignal = this.neurons[neuronId].findErrorSignal(
+          nextLayerErrorSignalsArray[neuronId]
         );
       } else {
-        this.neurons[i].propagationError = nextLayer.getWeightError(i);
+        errorSignal = nextLayer.getWeightError(neuronId);
       }
 
-      errorWeights[i] = this.neurons[i].propagationError;
+      if (!isFinite(errorSignal)) {
+        Log.throw(
+          `neuron ${neuronId +
+            1} errorWeight ${errorSignal}, is the last layer ${nextLayer ===
+            undefined}`,
+          this.moduleName
+        );
+      }
+
+      this.neurons[neuronId].errorSignal = errorSignal;
+      errorSignals[neuronId] = errorSignal;
+      this.layerErrorSignal += Math.abs(errorSignal);
     }
-    Log.debug(`PropagationError`, this.moduleName, errorWeights);
-    return errorWeights;
+    Log.debug(`PropagationError`, this.moduleName, errorSignals);
+    return errorSignals;
   };
 
   /**
@@ -174,8 +189,8 @@ export class Layer {
    */
   private getWeightError = (inputId: number): number => {
     let error = 0;
-    for (let i = 0; i < this.neurons.length; i++) {
-      error += this.neurons[i].weightError(inputId);
+    for (let neuronId = 0; neuronId < this.neurons.length; neuronId++) {
+      error += this.neurons[neuronId].weightedErrorSignal(inputId);
     }
     return error;
   };

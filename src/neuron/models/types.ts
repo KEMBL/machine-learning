@@ -12,12 +12,13 @@ export interface LayerConfig {
  * NeuralnNetwork configuration interface
  */
 export interface NetworkConfig {
+  name: string;
   bias: number;
   /** default layer cost function */
   activationFunction: ActivationType;
   costFunction: CostFunctionType;
   inputsAmount: number;
-  isInputGenerated: boolean;
+  //isInputGenerated: boolean;
   generator?: (
     inputsAmount: number
   ) => Generator<

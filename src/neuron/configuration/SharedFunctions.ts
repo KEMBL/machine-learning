@@ -30,7 +30,7 @@ export class SharedFunctions {
 
   // more https://rohanvarma.me/Loss-Functions/
   // more https://github.com/trekhleb/nano-neuron
-  public static costFunction = (
+  public static errorSignalFunction = (
     expected: number,
     prediction: number
   ): number => {

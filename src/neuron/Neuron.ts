@@ -13,7 +13,8 @@ const fnz = StringFunctions.fnz;
 export class Neuron {
   public neuronId = 0;
   public layerId = 0;
-  public propagationError = 0;
+  /** propagation error, difference between current output and expected  output */
+  public errorSignal = 0;
 
   private moduleName = '';
   private activatedValue = 0;
@@ -47,14 +48,24 @@ export class Neuron {
   ) {
     this.neuronId = neuronId;
     this.layerId = layerId;
-    this.moduleName = `Nr ${neuronId}${layerId}`;
+    this.moduleName = `Nr ${neuronId + 1}${layerId}`;
     Log.debug(`Config: activation: ${this.activationType}`, this.moduleName);
   }
 
-  public cost(expected: number): number {
+  /** Find propagation error, i.e..difference between current output and expected  output */
+  public findErrorSignal(expected: number): number {
     //this.log(`costf expec: ${fnz(expected)}, act: ${fnz(this.output)}`);
-    Log.debug(`costf expec: ${expected}, act: ${this.output}`, this.moduleName);
-    const errorCost = SharedFunctions.costFunction(expected, this.output);
+    Log.debug(
+      `error signal:`,
+      this.moduleName,
+      this.output,
+      `expeced:`,
+      expected
+    );
+    const errorCost = SharedFunctions.errorSignalFunction(
+      expected,
+      this.output
+    );
     return errorCost;
   }
 
@@ -71,7 +82,6 @@ export class Neuron {
     }
 
     // Log.debug(`${this.wIndex(inputId)} = ${fnz(weight)}`);
-
     this.inputs[inputId] = linkValue;
 
     //const pSum = this.propagationSum;
@@ -95,27 +105,53 @@ export class Neuron {
     Log.debug(`prediction ${fnz(this.output)}`, this.moduleName);
   }
 
-  public weightError = (inputId: number): number => {
-    const error = this.weights[inputId] * this.propagationError;
+  /**
+   * Returns  weight(input) * Error sygnal
+   * i.e. part of error according to weigh on given input
+   */
+  public weightedErrorSignal = (inputId: number): number => {
+    const errorByWeight = this.weights[inputId] * this.errorSignal;
     Log.debug(
-      `weightError ${this.wIndex(inputId)} = ${fnz(error)}`,
-      this.moduleName
+      `weightedErrorSignal ${this.wIndex(inputId)} = ${fnz(errorByWeight)}`,
+      this.moduleName,
+      this.weights[inputId],
+      this.errorSignal
     );
-    return error;
+    return errorByWeight;
   };
 
   public correctWeights = (learningDelta: number): void => {
     const weightAdditionMultiplayer =
-      this.propagationError *
+      this.errorSignal *
       SharedFunctions.activationFunctionPrime(
         this.output,
         this.activationType
       ) *
       learningDelta;
 
+    if (!isFinite(weightAdditionMultiplayer)) {
+      Log.throw(
+        `${this.neuronId}${this.layerId} addition Infinity, propError ${this.errorSignal}, my out ${this.output}`,
+        this.moduleName,
+        weightAdditionMultiplayer
+      );
+      return;
+    }
+
     for (let i = 0; i < this.weights.length; i++) {
       const weightAddition = weightAdditionMultiplayer * this.inputs[i];
       this.weights[i] += weightAddition;
+
+      if (isNaN(this.weights[i])) {
+        Log.throw(
+          `${this.wIndex(i)} input is NAN, weightAddition ${weightAddition}`,
+          this.moduleName,
+          weightAdditionMultiplayer,
+          this.inputs[i]
+        );
+        return;
+      }
+
       // this.log(`weightError ${this.wIndex(i)} = ${fnz(this.weights[i])}, added ${fnz(weightAddition)}`);
     }
   };

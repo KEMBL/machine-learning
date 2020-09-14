@@ -7,7 +7,12 @@ import {
 } from '../neuron/models';
 import { Log } from '../services';
 
+/**
+ * Regression. Feedforward neural network with backpropagation config
+ * Inputs and outputs should be taken by network from from generator function
+ */
 export class SinusGenerated implements NetworkConfig {
+  name = 'Sinus prediction';
   bias = 1;
   activationFunction: ActivationType = 'ReLU';
   costFunction: CostFunctionType = 'Squared';
@@ -24,9 +29,10 @@ export class SinusGenerated implements NetworkConfig {
     { neurons: 3 },
     { neurons: 1, activationType: 'Sigmoid' }
   ];
-  startWeights: number[][][] = [];
+  startWeights?: number[][][];
 
   constructor() {
+    Log.info(this.name, 'config');
     // const gen = generator(2);
     // console.log(gen.next());
     // console.log(gen.next());
@@ -64,14 +70,14 @@ export class SinusGenerated implements NetworkConfig {
     }
   }
 
-  isInputGenerated = !!this.generator;
+  //isInputGenerated = !!this.generator;
 
   test = (network: Network): void => {
     Log.log('');
     Log.log('Prediction test');
 
     const generator = this.generator(this.inputsAmount);
-    for (let i = 0; i < 3; i++) {
+    for (let sampleId = 0; sampleId < 3; sampleId++) {
       const sample = generator.next();
       if (sample.value) {
         const error = network.predict(
@@ -79,7 +85,7 @@ export class SinusGenerated implements NetworkConfig {
           sample.value.outputArray
         );
         Log.log(
-          `Step ${i + 1}, Error cost`,
+          `Sample ${sampleId + 1}, Error cost`,
           error,
           network.output(),
           sample.value.outputArray
