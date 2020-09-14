@@ -1,55 +1,22 @@
-import { LayerConfig } from './neuron/models';
 import { Configuration, Network } from './neuron';
 import { Log } from './services';
 import { Verbosity } from './models';
+import { SinusGenerated } from './configs';
 
 class Program {
   constructor() {
     const startedTime = new Date();
     Log.log('Programm started');
-
     Log.verbosity = Verbosity.Warning;
-    Configuration.bias = 1;
-    Configuration.activationType = 'ReLU'; // default
-    Configuration.useCostFunction = 'Squared';
+
+    //const conf = new FiveNeurons();
+    const conf = new SinusGenerated();
+    Configuration.bias = conf.bias;
+    Configuration.activationType = conf.activationFunction;
+    Configuration.useCostFunction = conf.costFunction;
 
     // Regression
-    const inputsAmount = 1;
-    function* generatorSinus(
-      inputsAmount: number
-    ): Generator<
-      {
-        inputArray: number[];
-        outputArray: number[];
-      },
-      void,
-      unknown
-    > {
-      let angle = 1; // degress
-      const max = 360;
-      while (true) {
-        const set = {
-          inputArray: Array<number>(inputsAmount).fill(0),
-          outputArray: Array<number>(1)
-        };
-        const degress = (angle * Math.PI) / 180;
-        set.inputArray[0] = degress;
-        set.outputArray = [Math.sin(degress)];
-        yield set;
-        angle = ++angle % max;
-      }
-    }
-
-    // const gen = generatorSinus(2);
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
-    // console.log(gen.next());
+    const inputsAmount = conf.inputsAmount;
 
     // if(startedTime.getTime() !==1) return;
 
@@ -57,37 +24,18 @@ class Program {
     // 3,3,1- 60 sec
     // 3,3,3,1 - 80 sec
 
-    //const networkInputs = [[1, 0]];
-    const targetOutputs = [[0.5]];
-    const maximumCostError = 0.0001;
-    const maxEpochsCount = 10000;
-    const learningDelta = 0.1;
-    const layersConfig: LayerConfig[] = [
-      { neurons: 3 },
-      { neurons: 3 },
-      { neurons: 3 },
-      // { neurons: 20 },
-      //       { neurons: 3 },
-      { neurons: 1, activationType: 'Sigmoid' }
-      //{ neurons: 1 }
-    ];
+    const networkInputs = conf.networkInputs;
+    const targetOutputs = conf.targetOutputs;
+    const maximumCostError = conf.maximumCostError;
+    const maxEpochsCount = conf.maxEpochsCount;
+    const learningDelta = conf.learningDelta;
+    const layersConfig = conf.layersConfig;
 
     // Fill in arrays if want to start not from random weights
     // Neurons:  XYZ  X - source output, Y - layer row   Z - input Layer
     // Debug. prefill weights
     //  [ [layer1], [layer2], ..., [[neuron1], [neuron2], ... ], [[[weight1, weight2, ...]], [[weight1, weight2, ...]], ...], [neuron2], ... ]  ]
-    const weights: number[][][] = [];
-    // const weights: number[][][] = [
-    //   [
-    //     [0.13, -0.42], // w111, w211
-    //     [-0.34, 0.38] // w121, w221
-    //   ],
-    //   [
-    //     [0.25, -0.2], // w112, w212
-    //     [0.07, 0.32] // w122, 2222
-    //   ],
-    //   [[-0.41, 0.12]] // w113, w213
-    // ];
+    const weights: number[][][] = conf.startWeights;
 
     // const weights = [
     //   [ [ 12.073027175758078, -0.42 ], [ 11.29143338568982, 0.38 ] ],
@@ -113,9 +61,13 @@ class Program {
       network.initWeights(weights);
     }
 
-    //network.train(networkInputs, targetOutputs); // propagate / errorcost / weig\hts correction (back propagation)
-    network.train(generatorSinus, 360); // propagate / errorcost / weig\hts correction (back propagation)
-    //new Network().testNeuron();
+    if (conf.isInputGenerated) {
+      network.train(conf.generator.bind(this), conf.learnigSamplesCount); // propagate / errorcost / weig\hts correction (back propagation)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      network.train(networkInputs!, targetOutputs!); // propagate / errorcost / weig\hts correction (back propagation)
+    }
+
     const result = network.output();
     Log.log('Programm finished', result, targetOutputs);
     Log.log('Result weights', network.getWeights());
@@ -126,37 +78,39 @@ class Program {
       (new Date().getTime() - startedTime.getTime()) * 0.001,
       'seconds'
     );
-
-    if (startedTime.getTime() === -1) {
-      Log.log('');
-      Log.log('Prediction');
-      // for (let i = 0; i < networkInputs.length; i++) {
-      //   const error = network.predict(networkInputs[i], targetOutputs[i]);
-      //   Log.log(
-      //     `Step ${i + 1}, Error cost`,
-      //     error,
-      //     network.output(),
-      //     targetOutputs[i]
-      //   );
-      // }
-
-      //   const generator = generatorSinus(inputsAmount);
-      //   for (let i = 0; i < 3; i++) {
-      //     const sample = generator.next();
-      //     if (sample.value) {
-      //       const error = network.predict(
-      //         sample.value.inputArray,
-      //         sample.value.outputArray
-      //       );
-      //       Log.log(
-      //         `Step ${i + 1}, Error cost`,
-      //         error,
-      //         network.output(),
-      //         sample.value.outputArray
-      //       );
-      //     }
-      //   }
+    if (conf.test) {
+      conf.test(network);
     }
+
+    //if (startedTime.getTime() === -1) {
+    // Log.log('');
+    // Log.log('Prediction');
+    // for (let i = 0; i < networkInputs.length; i++) {
+    //   const error = network.predict(networkInputs[i], targetOutputs[i]);
+    //   Log.log(
+    //     `Step ${i + 1}, Error cost`,
+    //     error,
+    //     network.output(),
+    //     targetOutputs[i]
+    //   );
+    // }
+    //   const generator = generatorSinus(inputsAmount);
+    //   for (let i = 0; i < 3; i++) {
+    //     const sample = generator.next();
+    //     if (sample.value) {
+    //       const error = network.predict(
+    //         sample.value.inputArray,
+    //         sample.value.outputArray
+    //       );
+    //       Log.log(
+    //         `Step ${i + 1}, Error cost`,
+    //         error,
+    //         network.output(),
+    //         sample.value.outputArray
+    //       );
+    //     }
+    //   }
+    //}
   }
 }
 
