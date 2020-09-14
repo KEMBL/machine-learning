@@ -16,7 +16,7 @@ weight? bias? => min cost (Ytarget - Ynow)
 
 
 outputReal     AF(outputTarget)
----
+------------
 
 cost rises = weight falls
 cost falls = weight rises
@@ -29,10 +29,26 @@ so weight + cost * learning_delta
 input [0,inf)
 y [0,inf)
 
-degrees of prime (0, 90) = degrees [0, 45] = w[0,1] +  degrees (45, 90) = w (1, inf)
+degrees of prime (0, 90) = degrees [0, 45] = w[0,1] + degrees (45, 90) = w (1, inf)
 slope from 0 to 
 y [0,inf)
 cost [0,inf]
+
+### Perfromance tips
+
+1) Paralelism: suppose we have 2 neuronfs on layer with 2 inputs: 12 and 34, so we can propagate input 1 and 3 to neuron 1 and 2 simultaneously as Sums inside neurons are independent
+2) In multibatch epochs it is possible to send new sample to input of the network as soon as previous data propagated to the next layer
+3) OpenCL, GPU, CPU extensions?
+
+------------
+QA
+
+1) 1 input: Sin, Cos, etc
+2) 2 inputs: 
+- https://en.wikipedia.org/wiki/Rosenbrock_function
+- c2=x2+y2
+3) 3+ inputs - multidimensionl sphere
+
 
 ------------
 Q&A
