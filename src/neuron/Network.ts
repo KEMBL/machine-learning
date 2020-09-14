@@ -81,8 +81,10 @@ export class Network {
 
   /** Performn epochs untill max epochs count or error is lower than criteria */
   public train: LearnFunction = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     inputArrayOrGenerator: any,
-    outputArrayOrSamplesAmount?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputArrayOrSamplesAmount: any
   ): number => {
     let epochError = 0;
     for (let epochId = 0; epochId < this.maxEpochsCount; epochId++) {
@@ -125,7 +127,7 @@ export class Network {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     inputArrayOrGenerator: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    outputArrayOrSamplesAmount?: any
+    outputArrayOrSamplesAmount: any
   ): number => {
     let epochError = 0;
     if (Array.isArray(inputArrayOrGenerator)) {
